@@ -10,6 +10,7 @@ class Matches extends React.Component {
 
     this.state = {
       name: '',
+      location: '',
       hobbies: '',
       aboutme: '',
       matches: [
@@ -22,13 +23,16 @@ class Matches extends React.Component {
       ]
     };
 
-    this.postMatches();
+    this.handleChange = this.handleChange.bind(this);
+    this.handleEditProfile = this.handleEditProfile.bind(this);
+    this.showMatchProfile = this.showMatchProfile.bind(this);
 
-    this.getMatches();
   }
 
-  postMatches() {
-    $.ajax( {
+  componentDidMount() {
+    Promise.resolve()
+    .then(() => {
+      $.ajax( {
       method: 'POST',
       url: '/matches',
       data: {
@@ -42,45 +46,61 @@ class Matches extends React.Component {
         console.log( 'ERROR:', error );
       }
     } );
-  }
+    })
+    .then(() => {
+      $.ajax({
+        method: 'GET',
+        url: '/matches',
+        success: ( data ) => {
+          data = JSON.parse( data );
 
-  getMatches() {
-    $.ajax( {
-      method: 'GET',
-      url: '/matches',
-      success: ( data ) => {
-        console.log( 'SUCCESS', data );
+          if ( data ) {
+            if ( data.length === 0 ) {
+              data = [
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
+                { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' }
+              ]
+            }
 
-        var data = JSON.parse( data );
-
-        if ( data ) {
-          if ( data.length === 0 ) {
-            data = [
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' },
-              { name: '｡ﾟ(*´□`)ﾟ｡', pic: 'https://s-media-cache-ak0.pinimg.com/originals/36/43/e7/3643e7e8dab9b88b3972ee1c9f909dea.jpg' }
-            ]
+            this.setState( {
+              matches: data
+            } );
           }
-
-          this.setState( {
-            matches: data
-          } );
+        },
+        error: ( error ) => {
+          console.log( 'ERROR:', error );
         }
-      },
-      error: ( error ) => {
-        console.log( 'ERROR:', error );
-      }
-    } );
+      });
+    })
+    .then(() => {
+      $.ajax({
+        method: 'GET',
+        url: '/profile',
+        success: ( data ) => {
+          data = JSON.parse( data );
+          this.setState ( {
+            name: data.fullname || '~(>_<~)',
+            location: data.location || '~(>_<~)',
+            hobbies: data.hobbies || '~(>_<~)',
+            aboutme: data.blog || '~(>_<~)'
+          } );
+        },
+        error: ( error ) => {
+          console.log( 'ERROR:', error );
+        }
+      });
+    })
   }
 
   handleEditProfile( event ) {
     event.preventDefault();
 
     $.post( 'updateUser', this.state, ( data ) => {
-      var data  = JSON.parse( data );
+      data  = JSON.parse(data);
 
       if( data ) {
         console.log( 'SUCCESS:', data );
@@ -101,6 +121,11 @@ class Matches extends React.Component {
     } );
   }
 
+  showMatchProfile (event) {
+    event.preventDefault();
+    console.log('clicked', event.target)
+  }
+
   render() {
     return (
       <div>
@@ -109,12 +134,12 @@ class Matches extends React.Component {
             <ImageUpload/>
           </div>
           <div className="col-md-7">
-            <EditProfile handleChange={ this.handleChange.bind( this ) } handleEditProfile={ this.handleEditProfile.bind( this ) }/>
+            <EditProfile n={this.state.name} l={this.state.location} h={this.state.hobbies} a={this.state.aboutme} handleChange={this.handleChange} handleEditProfile={this.handleEditProfile}/>
           </div>
         </div>
         <div className="row">
           <div className="matches-list col-lg-offset-1">
-            <MatchesList matches={ this.state.matches }/>
+            <MatchesList matches={ this.state.matches } showMatchProfile={this.showMatchProfile}/>
           </div>
         </div>
         <div className="row get-messages">
